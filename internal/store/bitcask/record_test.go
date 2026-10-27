@@ -3,9 +3,10 @@ package bitcask
 import (
 	"fmt"
 	"testing"
+	"errors"
 )
 
-func TestDummy(t *testing.T) {
+func TestBasicRecord(t *testing.T) {
 	key := []byte("answer")
 	value := []byte("cat")
 
@@ -26,3 +27,25 @@ func TestDummy(t *testing.T) {
 		t.Errorf("Values mismatch - %v against %v\n", value, gotValue)
 	}
 }
+
+func TestCorruptedEncoding(t *testing.T) {
+
+	key  := []byte("answer") 
+	var value []byte
+
+	encoded := encodeRecord(key, value)
+	encoded[len(encoded)/2] ^= 0xFF
+	
+	_, _, err := decodeRecord(encoded)
+
+	if err == nil {
+		t.Fatal("expected an error for a corrupted record, got nil")
+	}
+	if !errors.Is(err, ErrTruncatedRecord) {
+		t.Errorf("expected ErrTruncatedRecord, got %v", err)
+	}
+
+}
+
+	
+

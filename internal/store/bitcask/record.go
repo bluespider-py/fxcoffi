@@ -4,7 +4,11 @@ package bitcask
 import (
 	"time"
 	"encoding/binary"
+	"errors"
 )
+
+const headerSize = 16 // timestamp(8) + keySize(4) + valueSize(4); becomes 20 when you add the CRC
+var ErrTruncatedRecord = errors.New("record is truncated or has inconsistent sizes")
 
 func currentTimeUnix() uint64 {
 	return uint64(time.Now().Unix())
@@ -45,12 +49,22 @@ func decodeRecord(data []byte) (key, value []byte, err error) {
 	// 8 - 11 is key len
 	// 12 - 15 is value len
 	// 16 onwards is key and value
+
+	if len(data) < headerSize {
+		return nil, nil, ErrTruncatedRecord
+	}
+
 	
 	keyLen := binary.BigEndian.Uint32(data[8:12])
 	valueLen := binary.BigEndian.Uint32(data[12:16])
 
-	return data[16:16+keyLen], data[16+keyLen:16+keyLen+valueLen], nil
-	
+	if uint32(len(data)) < headerSize+keyLen+valueLen {
+		return nil, nil, ErrTruncatedRecord
+	}
+
+	return data[headerSize : headerSize+keyLen],
+		data[headerSize+keyLen : headerSize+keyLen+valueLen],
+		nil	
 }
 
 
