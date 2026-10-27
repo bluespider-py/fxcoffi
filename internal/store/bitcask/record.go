@@ -2,7 +2,6 @@
 package bitcask
 
 import (
-	"fmt"
 	"time"
 	"encoding/binary"
 )
@@ -29,9 +28,6 @@ func encodeRecord(key, value []byte) []byte {
 	keyLenByte := uint32ToBytes(uint32(len(key)))
 	valueLenByte := uint32ToBytes(uint32(len(value)))
 
-	fmt.Println(len(timeByte), len(keyLenByte), len(valueLenByte), len([]byte(key)), len([]byte(value)))
-
-
 	body := make([]byte, 0, len(timeByte) + len(keyLenByte) + len(valueLenByte) + len([]byte(key)) + len([]byte(value)))
 	body = append(body, timeByte...)
 	body = append(body, keyLenByte...)
@@ -49,8 +45,12 @@ func decodeRecord(data []byte) (key, value []byte, err error) {
 	// 8 - 11 is key len
 	// 12 - 15 is value len
 	// 16 onwards is key and value
+	
+	keyLen := binary.BigEndian.Uint32(data[8:12])
+	valueLen := binary.BigEndian.Uint32(data[12:16])
 
-	return []byte{}, []byte{}, nil
+	return data[16:16+keyLen], data[16+keyLen:16+keyLen+valueLen], nil
+	
 }
 
 
