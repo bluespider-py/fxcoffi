@@ -1,8 +1,8 @@
 package bitcask
 
 import (
-	"fmt"
 	"testing"
+	"encoding/binary"
 	"errors"
 )
 
@@ -12,8 +12,6 @@ func TestBasicRecord(t *testing.T) {
 
 	encoded := encodeRecord(key, value)
 	gotKey, gotValue, err := decodeRecord(encoded)
-
-	fmt.Printf("key - %q, value - %q, error - %v\n", gotKey, gotValue, err)
 
 	if err != nil {
 		t.Fatalf("Function threw error - %v\n", err)
@@ -47,5 +45,24 @@ func TestCorruptedEncoding(t *testing.T) {
 
 }
 
-	
+func TestDecodeOverflowingSizes(t *testing.T) {
+	data := make([]byte, headerSize)
+	binary.BigEndian.PutUint32(data[8:12], 0xFFFFFFF0) // keyLen; valueLen stays 0
 
+	_, _, err := decodeRecord(data)
+
+	if !errors.Is(err, ErrTruncatedRecord) {
+		t.Errorf("expected ErrTruncatedRecord, got %v", err)
+	}
+}
+
+func TestCorruptedPayload(t *testing.T) {
+	encoded := encodeRecord([]byte("answer"), []byte("cat"))
+	encoded[headerSize] ^= 0xFF
+
+	_, _, err := decodeRecord(encoded)
+
+	if !errors.Is(err, ErrChecksumMismatch) {
+		t.Errorf("expected ErrChecksumMismatch, got %v", err)
+	}
+}

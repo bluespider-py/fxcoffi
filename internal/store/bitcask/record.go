@@ -8,7 +8,8 @@ import (
 )
 
 const headerSize = 16 // timestamp(8) + keySize(4) + valueSize(4); becomes 20 when you add the CRC
-var ErrTruncatedRecord = errors.New("record is truncated or has inconsistent sizes")
+var ErrTruncatedRecord = errors.New("record is truncated or has inconsistent sizes.")
+var ErrChecksumMismatch = errors.New("checksum of the record failed.")
 
 func currentTimeUnix() uint64 {
 	return uint64(time.Now().Unix())
@@ -55,10 +56,10 @@ func decodeRecord(data []byte) (key, value []byte, err error) {
 	}
 
 	
-	keyLen := binary.BigEndian.Uint32(data[8:12])
-	valueLen := binary.BigEndian.Uint32(data[12:16])
+	keyLen := uint64(binary.BigEndian.Uint32(data[8:12]))
+	valueLen := uint64(binary.BigEndian.Uint32(data[12:16]))
 
-	if uint32(len(data)) < headerSize+keyLen+valueLen {
+	if uint64(len(data)) < uint64(headerSize)+keyLen+valueLen {
 		return nil, nil, ErrTruncatedRecord
 	}
 
