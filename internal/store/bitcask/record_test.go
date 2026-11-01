@@ -47,7 +47,7 @@ func TestCorruptedEncoding(t *testing.T) {
 
 func TestDecodeOverflowingSizes(t *testing.T) {
 	data := make([]byte, headerSize)
-	binary.BigEndian.PutUint32(data[8:12], 0xFFFFFFF0) // keyLen; valueLen stays 0
+	binary.BigEndian.PutUint32(data[keyLenIndex:keyLenIndex+4], 0xFFFFFFF0) // keyLen; valueLen stays 0
 
 	_, _, err := decodeRecord(data)
 
