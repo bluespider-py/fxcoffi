@@ -65,13 +65,14 @@ func decodeRecord(data []byte) (key, value []byte, err error) {
 	
 	keyLen := uint64(binary.BigEndian.Uint32(data[keyLenIndex:keyLenIndex+4]))
 	valueLen := uint64(binary.BigEndian.Uint32(data[valueLenIndex:valueLenIndex+4]))
+	end := headerSize + keyLen + valueLen
 
 	if uint64(len(data)) < uint64(headerSize)+keyLen+valueLen {
 		return nil, nil, ErrTruncatedRecord
 	}
 
 	// checksum/data corruption validation
-	if binary.BigEndian.Uint32(data[0:4]) != crc32.ChecksumIEEE(data[4:]) {
+	if binary.BigEndian.Uint32(data[0:4]) != crc32.ChecksumIEEE(data[4:end]) {
 		return nil, nil, ErrChecksumMismatch
 	}	
 
