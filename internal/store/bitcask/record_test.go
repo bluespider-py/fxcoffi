@@ -66,3 +66,26 @@ func TestCorruptedPayload(t *testing.T) {
 		t.Errorf("expected ErrChecksumMismatch, got %v", err)
 	}
 }
+
+func TestDecodeIgnoresTrailingBytes(t *testing.T) {
+	key := []byte("answer")
+	value := []byte("cat")
+
+	encoded := encodeRecord(key, value)
+	encoded = append(encoded, []byte("next record bytes")...)
+
+	gotKey, gotValue, err := decodeRecord(encoded)
+	// expect err == nil, key "answer", value "cat"
+	
+	if err != nil {
+		t.Fatalf("Function threw error - %v\n", err)
+	}
+
+	if string(gotKey) != string(key) {
+		t.Errorf("Keys mismatch - %v against %v\n", key, gotKey)
+	}
+
+	if string(value) != string(gotValue) {
+		t.Errorf("Values mismatch - %v against %v\n", value, gotValue)
+	}
+}
